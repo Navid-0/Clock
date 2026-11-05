@@ -39,14 +39,22 @@ button{border:1px solid var(--line);background:#ffffff12;color:#fff;border-radiu
 <body>
 <main>
 <header>
- <div class="brand"><div class="mark">⚓</div><div><h1>Hamburg Live</h1><div class="subtitle">Uhrzeit, Datum & aktuelle Temperatur</div></div></div>
+ <div class="brand"><div class="mark">⚓</div><div><h1>Hamburg Live</h1><div class="subtitle">Aktuelles Wetter und Uhrzeit für Hamburg</div></div></div>
  <div class="header-right"><div><span class="live-dot"></span>Online-Dashboard</div><div id="updated">Daten werden geladen …</div></div>
 </header>
 <section class="hero">
  <div class="panel clock-panel"><div class="clock" id="clock">--:--:--</div><div class="date" id="date">Hamburg</div></div>
  <div class="panel weather-panel">
-  <div class="weather-top"><div><div class="temp" id="temperature">--°</div></div><div class="weather-icon" id="weatherIcon">🌤️</div></div>
-  
+  <div class="weather-top"><div><div class="temp" id="temperature">--°C</div><div class="condition" id="condition">Wetter wird geladen …</div></div><div class="weather-icon" id="weatherIcon">🌤️</div></div>
+  <div class="weather-meta">
+   <div class="metric"><small>Gefühlt</small><strong id="feels">--</strong></div>
+   <div class="metric"><small>Luftfeuchtigkeit</small><strong id="humidity">--</strong></div>
+   <div class="metric"><small>Wind</small><strong id="wind">--</strong></div>
+   <div class="metric"><small>Niederschlag</small><strong id="rain">--</strong></div>
+   <div class="metric"><small>Sonnenaufgang</small><strong id="sunrise">--</strong></div>
+   <div class="metric"><small>Sonnenuntergang</small><strong id="sunset">--</strong></div>
+  </div>
+  <div class="forecast" id="forecast"></div>
  </div>
 </section>
 <footer><div>Temperatur: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></div><div>Hintergrundfoto: Dguendel, <a href="https://commons.wikimedia.org/wiki/File:Hamburg,_Blick_von_der_Elbphilharmonie_zum_Steinwerder_Hafen.jpg" target="_blank" rel="noopener">Wikimedia Commons (CC BY 4.0)</a> · <span id="refreshText">Aktualisierung alle 10 Minuten</span></div></footer>
@@ -56,7 +64,16 @@ const $=id=>document.getElementById(id);
 function tick(){const n=new Date();$('clock').textContent=n.toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin'});$('date').textContent=n.toLocaleDateString('de-DE',{timeZone:'Europe/Berlin',weekday:'long',day:'2-digit',month:'long',year:'numeric'});}
 tick();setInterval(tick,1000);
 const weatherText={0:['Klarer Himmel','☀️'],1:['Überwiegend klar','🌤️'],2:['Teilweise bewölkt','⛅'],3:['Bedeckt','☁️'],45:['Neblig','🌫️'],48:['Nebel mit Reif','🌫️'],51:['Leichter Nieselregen','🌦️'],53:['Nieselregen','🌦️'],55:['Starker Nieselregen','🌧️'],61:['Leichter Regen','🌦️'],63:['Regen','🌧️'],65:['Starker Regen','🌧️'],71:['Leichter Schneefall','🌨️'],73:['Schneefall','🌨️'],75:['Starker Schneefall','❄️'],80:['Regenschauer','🌦️'],81:['Regenschauer','🌧️'],82:['Starke Regenschauer','⛈️'],95:['Gewitter','⛈️'],96:['Gewitter mit Hagel','⛈️'],99:['Starkes Gewitter','⛈️']};
-async function getWeather(){try{const url='https://api.open-meteo.com/v1/forecast?latitude=53.5511&longitude=9.9937&current=temperature_2m,weather_code&timezone=Europe%2FBerlin';const r=await fetch(url);if(!r.ok)throw Error();const d=await r.json(),c=d.current;const w=weatherText[c.weather_code]||['','🌡️'];$('temperature').textContent=Math.round(c.temperature_2m)+'°C';$('weatherIcon').textContent=w[1];$('updated').textContent='Zuletzt aktualisiert: '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}catch(e){$('temperature').textContent='--°C';$('updated').textContent='Temperaturdaten nicht erreichbar';}}
+async function getWeather(){try{
+ const url='https://api.open-meteo.com/v1/forecast?latitude=53.5511&longitude=9.9937&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=5';
+ const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
+ const d=await r.json(),c=d.current,w=weatherText[c.weather_code]||['Wetter aktuell','🌡️'];
+ $('temperature').textContent=Math.round(c.temperature_2m)+'°C';$('condition').textContent=w[0];$('weatherIcon').textContent=w[1];
+ $('feels').textContent=Math.round(c.apparent_temperature)+'°C';$('humidity').textContent=c.relative_humidity_2m+' %';$('wind').textContent=Math.round(c.wind_speed_10m)+' km/h';$('rain').textContent=c.precipitation+' mm';
+ $('sunrise').textContent=d.daily.sunrise[0].slice(11,16);$('sunset').textContent=d.daily.sunset[0].slice(11,16);
+ $('forecast').innerHTML=d.daily.time.map((day,i)=>{const wx=weatherText[d.daily.weather_code[i]]||['','🌡️'];const name=new Date(day+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short'});return '<div class="day"><small>'+name+'</small><b>'+wx[1]+'</b><span>'+Math.round(d.daily.temperature_2m_max[i])+'° / '+Math.round(d.daily.temperature_2m_min[i])+'°</span></div>';}).join('');
+ $('updated').textContent='Zuletzt geprüft: '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+ }catch(e){$('condition').textContent='Wetterdaten derzeit nicht erreichbar';$('updated').textContent='Daten nicht erreichbar';}}
 getWeather();setInterval(getWeather,600000);
 </script>
 </body>
