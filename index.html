@@ -46,6 +46,7 @@ button{border:1px solid var(--line);background:#ffffff12;color:#fff;border-radiu
  .header-right{font-size:clamp(16px,1.15vw,22px)}
  .live-dot{width:12px;height:12px}
  .hero{flex:1;min-height:0;grid-template-columns:1.15fr .85fr;gap:1.2vw;margin:0}
+ .empty-bottom{width:28.75%;height:9vh;min-height:58px;margin-top:1.2vh;border:1px solid rgba(255,255,255,.22);border-radius:18px;background:transparent;backdrop-filter:none;box-shadow:none}
  .panel{border-radius:28px}
  .clock-panel{min-height:0;padding:3vw;align-items:flex-start}
  .clock{font-size:clamp(100px,10.5vw,205px);letter-spacing:-.045em;white-space:nowrap;max-width:100%;font-weight:780}
@@ -104,6 +105,7 @@ button{border:1px solid var(--line);background:#ffffff12;color:#fff;border-radiu
   <div class="forecast" id="forecast"></div>
  </div>
 </section>
+<div class="empty-bottom" aria-label="Leerer transparenter Bereich"></div>
 <footer><div>Temperatur: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></div><div>Hintergrundfoto: Dguendel, <a href="https://commons.wikimedia.org/wiki/File:Hamburg,_Blick_von_der_Elbphilharmonie_zum_Steinwerder_Hafen.jpg" target="_blank" rel="noopener">Wikimedia Commons (CC BY 4.0)</a> · <span id="refreshText">Aktualisierung alle 10 Minuten</span></div></footer>
 </main>
 <script>
